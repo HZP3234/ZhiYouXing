@@ -1,0 +1,70 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: zhiyouxing-gateway
+  cloud:
+    nacos:
+      # 服务端开了鉴权（compose 里 NACOS_AUTH_ENABLE=true），客户端不带凭据会被拒：401 User not found
+      # 这两个全局键同时作用于 discovery 与 config，无需分别在各自节点下重复配置
+      username: nacos
+      password: nacos
+      discovery:
+        server-addr: 192.168.137.128:8848
+        # Nacos 跑在 VM 里，未启动时不要因注册失败直接退出；服务照常起来并自动重试注册
+        fail-fast: false
+    gateway:
+      # 路由按「资源前缀」建，而不是按「服务名」建。各服务的 controller 都挂在根路径上
+      # （/attraction、/hotel_info、/restaurant、/tour_guide…），所以 /api/<资源>/X 经 StripPrefix=1
+      # 去掉 /api 后正好命中 /<资源>/X。若按 /api/<服务名>/** 建，除 agent 外全部打不到——
+      # 没有任何服务在 /<服务名> 上有类级映射。下面前缀逐条对照各服务的控制器核实过。
+      routes:
+        # /attraction /attraction_comment /attraction_type /ticket_order /attraction_staff
+        - id: zhiyouxing-attraction
+          uri: lb://zhiyouxing-attraction
+          predicates:
+            - Path=/api/attraction/**,/api/attraction_comment/**,/api/attraction_type/**,/api/ticket_order/**,/api/attraction_staff/**
+          filters:
+            - StripPrefix=1
+        # /hotel_comment /hotel_info /hotel_reservation /room_type /hotel_staff
+        - id: zhiyouxing-hotel
+          uri: lb://zhiyouxing-hotel
+          predicates:
+            - Path=/api/hotel_comment/**,/api/hotel_info/**,/api/hotel_reservation/**,/api/room_type/**,/api/hotel_staff/**
+          filters:
+            - StripPrefix=1
+        # /restaurant /restaurant_comment /restaurant_reservation /restaurant_staff
+        - id: zhiyouxing-food
+          uri: lb://zhiyouxing-food
+          predicates:
+            - Path=/api/restaurant/**,/api/restaurant_comment/**,/api/restaurant_reservation/**,/api/restaurant_staff/**
+          filters:
+            - StripPrefix=1
+        # /tour_guide 是登录注册所在（/login /register /logout /session /resetPass 都挂它下面）
+        # /consult 是线路咨询（游客↔导游双向对话），也在 travel 服务里，别漏 ——
+        # 漏了就是前端 404，且因为它是 POST /send 才报错，会让人以为是跨域。
+        - id: zhiyouxing-travel
+          uri: lb://zhiyouxing-travel
+          predicates:
+            - Path=/api/tour_guide/**,/api/travel_guide/**,/api/travel_guide_tag/**,/api/travel_guide_comment/**,/api/travel_route/**,/api/travel_route_comment/**,/api/route_type/**,/api/news/**,/api/news_type/**,/api/forum/**,/api/group_tour/**,/api/help_request/**,/api/friend_link/**,/api/store_up/**,/api/file/**,/api/consult/**
+          filters:
+            - StripPrefix=1
+        # user 服务的控制器挂在 /user（游客登录、实名认证、消费记录）与 /users（管理员的账号表
+        # 与审核台：/users/login、/users/session、/users/user_identity/**、/users/qualification/**）。
+        # 两个前缀必须分别写：Path=/api/user/** 匹配不到 /api/users/xxx ——
+        # 「user」与「users」是两个不同的路径段，** 不会替前面的字面量兜底。
+        # 少写 users 那条，管理员就登不进来（而且登录是 GET，容易被当成跨域排查）。
+        - id: zhiyouxing-user
+          uri: lb://zhiyouxing-user
+          predicates:
+            - Path=/api/user/**,/api/users/**
+          filters:
+            - StripPrefix=1
+        # agent 的控制器挂在 /agent，/api/agent/** 去掉 /api 后正好命中
+        - id: zhiyouxing-agent
+          uri: lb://zhiyouxing-agent
+          predicates:
+            - Path=/api/agent/**
+          filters:
+            - StripPrefix=1

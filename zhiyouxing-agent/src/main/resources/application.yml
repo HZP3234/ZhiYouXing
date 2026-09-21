@@ -1,0 +1,82 @@
+server:
+  port: 8092
+
+spring:
+  application:
+    name: zhiyouxing-agent
+  # 真实密钥放在被 git 忽略的 application-local.yml 中，默认激活 local profile 加载它
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  cloud:
+    nacos:
+      # 服务端开了鉴权（compose 里 NACOS_AUTH_ENABLE=true），客户端不带凭据会被拒：401 User not found
+      # 这两个全局键同时作用于 discovery 与 config，无需分别在各自节点下重复配置
+      username: nacos
+      password: nacos
+      discovery:
+        server-addr: 192.168.137.128:8848
+        fail-fast: false
+  ai:
+    dashscope:
+      # 真实 key 见 application-local.yml；此处保留非空占位，缺失时由 AgentService 给出友好提示
+      api-key: ${DASHSCOPE_API_KEY:sk-not-configured}
+      chat:
+        options:
+          model: qwen-plus
+          # 限制生成上限，控制单次请求耗时（工具内部还会用更小的 maxToken 覆盖）
+          max-tokens: 1600
+      # RAG 检索用的向量模型，输出 1024 维，与下方 agent.knowledge.embedding-dimension 必须一致
+      embedding:
+        options:
+          model: text-embedding-v3
+    mcp:
+      client:
+        # 关闭 MCP 自动装配：不声明任何连接，由 TicketMcpConfig 手动装配并容错
+        enabled: false
+
+# RAG 知识库：把 resources/knowledge 下的通用出行知识向量化后存进 Milvus，供 Agent 检索引用。
+# 语料刻意只放「与目的地无关」的内容（行前准备/行李退改/带娃带老人/季节穿衣避坑），
+# 城市相关的点位素材一律走 PoiTool 的高德实时接口。
+agent:
+  knowledge:
+    # 关掉后不连 Milvus，检索工具降级为提示信息，其余工具照常可用
+    enabled: ${AGENT_KNOWLEDGE_ENABLED:true}
+    # 换新集合名：旧集合 zhiyouxing_knowledge 里是已废弃的城市语料，
+    # 沿用同名的话灌库前的「非空即跳过」探测会让新语料永远灌不进去，检索还会返回旧城市素材
+    collection-name: zhiyouxing_general_knowledge
+    # 每次检索取回的片段数
+    top-k: 4
+    # 必须与所用 embedding 模型的输出维度一致，text-embedding-v3 为 1024
+    embedding-dimension: 1024
+    locations: classpath:knowledge/*.md
+    milvus:
+      # 中间件跑在 VM 里，不是本机
+      host: ${MILVUS_HOST:192.168.137.128}
+      port: ${MILVUS_PORT:19530}
+      database: ${MILVUS_DATABASE:default}
+
+# 和风天气（QWeather）
+hefeng:
+  weather:
+    # 必须带 https:// 协议头，否则拼接出的 URL 无法访问
+    host: ${HEFENG_WEATHER_HOST:https://n74wcwh47t.re.qweatherapi.com}
+  api:
+    # 真实 key 见 application-local.yml
+    key: ${HEFENG_API_KEY:}
+
+# 高德地图 Web 服务（用户定位 / 两地测距 / 目的地 POI 检索），需申请「Web 服务」类型 Key
+amap:
+  # 真实 key 见 application-local.yml；为空时定位、测距与 POI 检索降级为提示信息，不影响其余功能
+  key: ${AMAP_KEY:}
+  host: ${AMAP_HOST:https://restapi.amap.com}
+
+# 12306 火车票票价：通过 MCP 客户端以 stdio 拉起 npx 子进程查询真实票价
+ticket:
+  mcp:
+    # 关掉后完全不启动 12306 子进程，火车票价回退为模型估算，其余功能不受影响
+    enabled: ${TICKET_MCP_ENABLED:true}
+
+logging:
+  level:
+    com.zhiyouxing: info
+    com.alibaba.cloud.ai.graph: info

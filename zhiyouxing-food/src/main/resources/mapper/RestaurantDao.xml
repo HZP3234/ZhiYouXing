@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhiyouxing.food.dao.RestaurantDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.zhiyouxing.food.entity.RestaurantEntity" id="restaurantMap">
+        <result property="restaurantName" column="restaurant_name"/>
+        <result property="restaurantImage" column="restaurant_image"/>
+        <result property="signatureDish" column="signature_dish"/>
+        <result property="businessHours" column="business_hours"/>
+        <result property="avgCost" column="avg_cost"/>
+        <result property="restaurantAddress" column="restaurant_address"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="restaurantIntro" column="restaurant_intro"/>
+        <result property="thumbsUpNum" column="thumbs_up_num"/>
+        <result property="crazilyNum" column="crazily_num"/>
+        <result property="clickTime" column="click_time"/>
+        <result property="clickNum" column="click_num"/>
+        <result property="discussNum" column="discuss_num"/>
+        <result property="storeUpNum" column="store_up_num"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.zhiyouxing.food.entity.vo.RestaurantVO" >
+		SELECT * FROM restaurant  restaurant         
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.zhiyouxing.food.entity.vo.RestaurantVO" >
+		SELECT  restaurant.* FROM restaurant  restaurant 	
+ 		${ew.customSqlSegment}
+	</select>
+
+    <select id="selectListView"
+		resultType="com.zhiyouxing.food.entity.view.RestaurantView" >
+
+		SELECT  restaurant.* FROM restaurant  restaurant 	        
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectView"
+		resultType="com.zhiyouxing.food.entity.view.RestaurantView" >
+		SELECT * FROM restaurant  restaurant ${ew.customSqlSegment}
+	</select>
+	
+
+
+</mapper>

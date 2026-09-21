@@ -1,0 +1,57 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: zhiyouxing-hotel
+  # 与 attraction / food 保持一致：默认激活 local profile，加载被 git 忽略的 application-local.yml。
+  # 默认 hybrid：不加任何覆盖，直接用本文件的配置 —— 中间件（Nacos/Redis/MinIO）
+  # 都在 VM(192.168.137.128) 里，这样服务才会注册进 Nacos、token 才写得进 VM Redis。
+  #
+  # 千万别把默认值改回 local：那个 profile 会把中间件指到 127.0.0.1、并**关掉 Nacos 注册**
+  # （见 application-local.yml），于是网关 lb:// 找不到实例（503），且 token 校验直接抛异常。
+  # 它只适合 VM 关机时的离线兜底，用 SPRING_PROFILES_ACTIVE=local 显式指定即可。
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:hybrid}
+  config:
+    import:
+      - optional:nacos:zhiyouxing-hotel.yml
+  cloud:
+    nacos:
+      # 服务端开了鉴权（compose 里 NACOS_AUTH_ENABLE=true），客户端不带凭据会被拒：401 User not found
+      # 这两个全局键同时作用于 discovery 与 config，无需分别在各自节点下重复配置
+      username: nacos
+      password: nacos
+      discovery:
+        server-addr: 192.168.137.128:8848
+        # Nacos 跑在 VM 里，未启动时不要因注册失败直接退出；服务照常起来并自动重试注册
+        fail-fast: false
+      config:
+        server-addr: 192.168.137.128:8848
+        file-extension: yml
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 本机 MySQL（D:\MySQL）；VM 库是旧 schema、缺三张 *_staff 表，故改用本地。Redis/Nacos 仍在 VM
+    url: jdbc:mysql://127.0.0.1:3306/zhiyouxing?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    # 本机 MySQL 的 root 口令
+    password: 123456
+  data:
+    redis:
+      host: 192.168.137.128
+      port: 6379
+      # VM 里的 Redis 用 --requirepass 启的，不带密码会 NOAUTH
+      password: 123456
+      database: 0
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    banner: false
+    db-config:
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0

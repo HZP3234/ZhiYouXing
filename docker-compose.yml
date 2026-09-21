@@ -1,0 +1,244 @@
+# ============================================================================
+# resume-screen-agent 一键部署编排（Linux 宿主机）
+#
+#   ● 中间件：MySQL / Redis / Nacos / MinIO / Milvus(+etcd) / Attu /Seata
+#
+# 宿主机目录约定（DEPLOY_ROOT 在 .env 里配置，默认 /opt/mydocker）：
+#   ${DEPLOY_ROOT}/<组件名>/conf   配置
+#   ${DEPLOY_ROOT}/<组件名>/data   数据
+#   ${DEPLOY_ROOT}/<组件名>/logs   日志
+# 这些目录由 scripts/init.sh 创建并把配置模板铺进去，首次部署必须先执行它。
+#
+# 部署顺序（在宿主机上执行）：
+#   bash scripts/init.sh      # 建目录 + 铺配置模板（含从镜像提取 Milvus 默认配置）
+#   bash scripts/start.sh     # 拉起全部容器
+#
+# ============================================================================
+
+name: my_container
+
+networks:
+  my-service-net:
+    driver: bridge
+
+# 说明：全部持久化数据都落在宿主机 ${DEPLOY_ROOT}/<组件名>/data 下（bind mount），
+#       因此这里不定义任何 Docker 命名卷 —— 备份/迁移直接打包 /opt/mydocker 即可。
+
+services:
+
+  # =========================================================================
+  # 一、基础设施
+  # =========================================================================
+  mysql:
+    image: mysql:8.4.3
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Shanghai
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - ${DEPLOY_ROOT}/mysql/data:/var/lib/mysql
+      - ${DEPLOY_ROOT}/mysql/conf:/etc/mysql/conf.d:ro
+      - ${DEPLOY_ROOT}/mysql/logs:/var/log/mysql
+    healthcheck:
+      # $$ 转义成容器内的 $，在容器 shell 里展开 MYSQL_ROOT_PASSWORD
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - my-service-net
+
+  redis:
+    image: redis:7.4
+    container_name: redis
+    restart: unless-stopped
+    # 配置文件来自 ${DEPLOY_ROOT}/redis/conf/redis.conf；
+    # 密码用命令行参数覆盖（命令行优先级高于配置文件），避免密码写在两处
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf", "--requirepass", "${REDIS_PASSWORD}"]
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - ${DEPLOY_ROOT}/redis/data:/data
+      - ${DEPLOY_ROOT}/redis/conf:/usr/local/etc/redis:ro
+      - ${DEPLOY_ROOT}/redis/logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - my-service-net
+
+  nacos:
+    image: nacos/nacos-server:v3.0.3
+    container_name: nacos
+    restart: unless-stopped
+    environment:
+      MODE: standalone
+      # identity key/value 用于服务端节点间身份校验
+      NACOS_AUTH_ENABLE: "true"
+      NACOS_AUTH_TOKEN: ${NACOS_AUTH_TOKEN}
+      NACOS_AUTH_IDENTITY_KEY: ${NACOS_AUTH_IDENTITY_KEY}
+      NACOS_AUTH_IDENTITY_VALUE: ${NACOS_AUTH_IDENTITY_VALUE}
+      JVM_XMS: 512m
+      JVM_XMX: 512m
+      JVM_XMN: 256m
+      TZ: Asia/Shanghai
+    ports:
+      - "${NACOS_PORT}:8848"              # 主端口：HTTP API + gRPC 入口
+      - "${NACOS_GRPC_PORT}:9848"         # gRPC：客户端连接
+      - "${NACOS_GRPC_SERVER_PORT}:9849"  # gRPC：服务端节点间同步
+      - "${NACOS_CONSOLE_PORT}:8080"      # v3 控制台（2.x 时代控制台在 8848/nacos）
+    volumes:
+      - ${DEPLOY_ROOT}/nacos/data:/home/nacos/data
+      - ${DEPLOY_ROOT}/nacos/logs:/home/nacos/logs
+      # 注意：故意不挂载 /home/nacos/conf —— Nacos 的配置由上面这些环境变量驱动，
+      # 镜像启动脚本会自行生成 conf 下的文件；把宿主空目录挂上去反而会让它起不来。
+    healthcheck:
+      # Nacos 3.x 把健康检查端点从 v1 换成了 v3（v1 路径在 3.x 上返回 404，
+      # 而 curl -f 会把 404 判为失败 —— 现象就是「容器明明能访问，却一直 unhealthy」）。
+      #
+      # 这里写成候选链，任一返回 2xx 即视为健康，避免镜像小版本差异导致误判：
+      #   1) v3 服务端 readiness（3.x 的正规路径）
+      #   2) v1 控制台 readiness（2.x 的路径，部分 3.x 构建仍保留）
+      #   3) v3 控制台 readiness（控制台在 8080 端口，不在 8848）
+      # 想精简的话，按 README「排错」章节的命令测出实际可用的那一个，删掉其余。
+      test: ["CMD-SHELL", "curl -fsS --max-time 3 http://127.0.0.1:8848/nacos/v3/admin/core/state/readiness || curl -fsS --max-time 3 http://127.0.0.1:8848/nacos/v1/console/health/readiness || curl -fsS --max-time 3 http://127.0.0.1:8080/v3/console/health/readiness || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+    networks:
+      - my-service-net
+
+  minio:
+    image: alpine/minio:latest-release
+    container_name: minio
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      TZ: Asia/Shanghai
+    ports:
+      - "${MINIO_API_PORT}:9000"       # S3 API（file-service 走这个）
+      - "${MINIO_CONSOLE_PORT}:9001"   # Web 控制台（手动建桶走这个）
+    volumes:
+      - ${DEPLOY_ROOT}/minio/data:/data
+    healthcheck:
+      # ⚠️ alpine 基础镜像自带 busybox wget；若该镜像没有 wget，改为 mc ready local
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:9000/minio/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - my-service-net
+
+  # Milvus standalone 的元数据存储（Milvus 强依赖，官方标准做法）
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.18
+    container_name: etcd
+    restart: unless-stopped
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    ports:
+      - "${ETCD_PORT}:2379"
+    volumes:
+      - ${DEPLOY_ROOT}/etcd/data:/etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 20s
+    networks:
+      - my-service-net
+
+  milvus:
+    image: milvusdb/milvus:v2.6.18
+    container_name: milvus
+    restart: unless-stopped
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      # Milvus 官方要求，否则容器可能无法正常启动
+      - seccomp:unconfined
+    environment:
+      # 这两个环境变量由镜像启动脚本替换进 /milvus/configs/milvus.yaml 的占位符里
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+      MINIO_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      MINIO_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET_NAME: milvus-bucket
+      MINIO_USE_SSL: "false"
+      TZ: Asia/Shanghai
+    ports:
+      - "${MILVUS_PORT}:19530"           # Milvus 服务端口（knowledge-vector-service 连它）
+      - "${MILVUS_METRICS_PORT}:9091"    # 健康检查 / 监控指标
+    volumes:
+      - ${DEPLOY_ROOT}/milvus/data:/var/lib/milvus
+      # 配置目录：init.sh 会先从镜像里把默认配置整套提取出来再挂载，
+      # 因此这里不会是空目录。改配置改宿主机上的 milvus.yaml 即可。
+      # 不用 :ro —— 启动脚本需要把环境变量替换写回配置文件。
+      - ${DEPLOY_ROOT}/milvus/conf:/milvus/configs
+      - ${DEPLOY_ROOT}/milvus/logs:/milvus/logs
+    depends_on:
+      etcd:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      timeout: 20s
+      retries: 5
+      start_period: 90s
+    networks:
+      - my-service-net
+
+  # Milvus 可视化管理界面
+  attu:
+    image: zilliz/attu:v2.6
+    container_name: attu
+    restart: unless-stopped
+    environment:
+      MILVUS_URL: http://milvus:19530
+    ports:
+      - "${ATTU_PORT}:3000"
+    depends_on:
+      milvus:
+        condition: service_healthy
+    # Attu 是无状态管理界面，没有需要持久化的数据，因此不挂载宿主目录
+    networks:
+      - my-service-net
+   
+  # Seata 分布式事务
+  seata:
+    image: seata-server:2.2.0
+    container_name: seata
+    restart: unless-stopped
+    environment:
+      # 注册到 Nacos 的 IP，必须是 Nacos 能访问到的宿主机 IP
+      SEATA_IP: 192.168.137.128
+      TZ: Asia/Shanghai
+    ports:
+      - "${SEATA_PORT:-8091}:8091"          # Seata TC 服务端口（客户端连接）
+      - "${SEATA_CONSOLE_PORT:-7091}:7091"  # Seata 控制台端口
+    volumes:
+      # 配置文件目录（你已有的 ${DEPLOY_ROOT}/seata/conf）
+      - ${DEPLOY_ROOT}/seata/conf/application.yml:/seata-server/resources/application.yml:ro
+      - ${DEPLOY_ROOT}/seata/data:/seata-server/data
+      - ${DEPLOY_ROOT}/seata/logs:/seata-server/logs
+    depends_on:
+      - nacos
+    networks:
+      - my-service-net

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhiyouxing.attraction.dao.TicketOrderDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.zhiyouxing.attraction.entity.TicketOrderEntity" id="ticketOrderMap">
+        <result property="orderNo" column="order_no"/>
+        <result property="attractionName" column="attraction_name"/>
+        <result property="image" column="image"/>
+        <result property="attractionType" column="attraction_type"/>
+        <result property="ticketPrice" column="ticket_price"/>
+        <result property="quantity" column="quantity"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="userAccount" column="user_account"/>
+        <result property="userName" column="user_name"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="purchaseTime" column="purchase_time"/>
+        <result property="isPay" column="is_pay"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.zhiyouxing.attraction.entity.vo.TicketOrderVO" >
+		SELECT * FROM ticket_order  ticket_order         
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.zhiyouxing.attraction.entity.vo.TicketOrderVO" >
+		SELECT  ticket_order.* FROM ticket_order  ticket_order 	
+ 		${ew.customSqlSegment}
+	</select>
+
+    <select id="selectListView"
+		resultType="com.zhiyouxing.attraction.entity.view.TicketOrderView" >
+
+		SELECT  ticket_order.* FROM ticket_order  ticket_order 	        
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectView"
+		resultType="com.zhiyouxing.attraction.entity.view.TicketOrderView" >
+		SELECT * FROM ticket_order  ticket_order ${ew.customSqlSegment}
+	</select>
+	
+
+    <select id="selectValue" resultType="map" >
+        SELECT ${params.xColumn}, ROUND(sum(${params.yColumn}),1) total FROM ticket_order
+        ${ew.customSqlSegment}
+        group by ${params.xColumn}
+    </select>
+
+    <select id="selectTimeStatValue" resultType="map" >
+        <if test = 'params.timeStatType == "日"'>
+                SELECT DATE_FORMAT(${params.xColumn},'%Y-%m-%d') ${params.xColumn}, sum(${params.yColumn}) total FROM ticket_order
+                ${ew.customSqlSegment}
+                group by DATE_FORMAT(${params.xColumn},'%Y-%m-%d')
+        </if>
+        <if test = 'params.timeStatType == "月"'>
+                SELECT DATE_FORMAT(${params.xColumn},'%Y-%m') ${params.xColumn}, sum(${params.yColumn}) total FROM ticket_order
+                ${ew.customSqlSegment}
+                group by DATE_FORMAT(${params.xColumn},'%Y-%m')
+        </if>
+        <if test = 'params.timeStatType == "年"'>
+                SELECT DATE_FORMAT(${params.xColumn},'%Y') ${params.xColumn}, sum(${params.yColumn}) total FROM ticket_order
+                ${ew.customSqlSegment}
+                group by DATE_FORMAT(${params.xColumn},'%Y')
+        </if>
+    </select>
+
+    <select id="selectGroup" resultType="map" >
+        SELECT ${params.column} , count(1) total FROM ticket_order
+        ${ew.customSqlSegment}
+        group by ${params.column}
+    </select>
+
+
+
+
+</mapper>

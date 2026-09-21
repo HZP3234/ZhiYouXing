@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhiyouxing.attraction.dao.AttractionDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.zhiyouxing.attraction.entity.AttractionEntity" id="attractionMap">
+        <result property="attractionName" column="attraction_name"/>
+        <result property="image" column="image"/>
+        <result property="attractionType" column="attraction_type"/>
+        <result property="openingHours" column="opening_hours"/>
+        <result property="ticketPrice" column="ticket_price"/>
+        <result property="quantity" column="quantity"/>
+        <result property="attractionLocation" column="attraction_location"/>
+        <result property="attractionDescription" column="attraction_description"/>
+        <result property="thumbsUpNum" column="thumbs_up_num"/>
+        <result property="crazilyNum" column="crazily_num"/>
+        <result property="clickTime" column="click_time"/>
+        <result property="discussNum" column="discuss_num"/>
+        <result property="storeUpNum" column="store_up_num"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.zhiyouxing.attraction.entity.vo.AttractionVO" >
+		SELECT * FROM attraction  attraction         
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.zhiyouxing.attraction.entity.vo.AttractionVO" >
+		SELECT  attraction.* FROM attraction  attraction 	
+ 		${ew.customSqlSegment}
+	</select>
+
+    <select id="selectListView"
+		resultType="com.zhiyouxing.attraction.entity.view.AttractionView" >
+
+		SELECT  attraction.* FROM attraction  attraction 	        
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectView"
+		resultType="com.zhiyouxing.attraction.entity.view.AttractionView" >
+		SELECT * FROM attraction  attraction ${ew.customSqlSegment}
+	</select>
+	
+
+
+</mapper>

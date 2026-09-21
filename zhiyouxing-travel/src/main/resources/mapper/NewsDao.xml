@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhiyouxing.travel.dao.NewsDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.zhiyouxing.travel.entity.NewsEntity" id="newsMap">
+        <result property="title" column="title"/>
+        <result property="introduction" column="introduction"/>
+        <result property="typeName" column="type_name"/>
+        <result property="name" column="name"/>
+        <result property="headPortrait" column="head_portrait"/>
+        <result property="clickNum" column="click_num"/>
+        <result property="clickTime" column="click_time"/>
+        <result property="thumbsUpNum" column="thumbs_up_num"/>
+        <result property="crazilyNum" column="crazily_num"/>
+        <result property="storeUpNum" column="store_up_num"/>
+        <result property="picture" column="picture"/>
+        <result property="content" column="content"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.zhiyouxing.travel.entity.vo.NewsVO" >
+		SELECT * FROM news  news         
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.zhiyouxing.travel.entity.vo.NewsVO" >
+		SELECT  news.* FROM news  news 	
+ 		${ew.customSqlSegment}
+	</select>
+
+    <select id="selectListView"
+		resultType="com.zhiyouxing.travel.entity.view.NewsView" >
+
+		SELECT  news.* FROM news  news 	        
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectView"
+		resultType="com.zhiyouxing.travel.entity.view.NewsView" >
+		SELECT * FROM news  news ${ew.customSqlSegment}
+	</select>
+	
+
+
+</mapper>

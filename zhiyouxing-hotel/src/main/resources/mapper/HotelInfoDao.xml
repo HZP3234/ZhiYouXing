@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhiyouxing.hotel.dao.HotelInfoDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.zhiyouxing.hotel.entity.HotelInfoEntity" id="hotelInfoMap">
+        <result property="hotelName" column="hotel_name"/>
+        <result property="hotelAddress" column="hotel_address"/>
+        <result property="hotelImage" column="hotel_image"/>
+        <result property="hotelIntro" column="hotel_intro"/>
+        <result property="clickTime" column="click_time"/>
+        <result property="clickNum" column="click_num"/>
+        <result property="discussNum" column="discuss_num"/>
+        <result property="storeUpNum" column="store_up_num"/>
+        <result property="auditStatus" column="audit_status"/>
+        <result property="auditReply" column="audit_reply"/>
+        <result property="auditTime" column="audit_time"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.zhiyouxing.hotel.entity.vo.HotelInfoVO" >
+		SELECT * FROM hotel_info  hotel_info         
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.zhiyouxing.hotel.entity.vo.HotelInfoVO" >
+		SELECT  hotel_info.* FROM hotel_info  hotel_info 	
+ 		${ew.customSqlSegment}
+	</select>
+
+    <select id="selectListView"
+		resultType="com.zhiyouxing.hotel.entity.view.HotelInfoView" >
+
+		SELECT  hotel_info.* FROM hotel_info  hotel_info 	        
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectView"
+		resultType="com.zhiyouxing.hotel.entity.view.HotelInfoView" >
+		SELECT * FROM hotel_info  hotel_info ${ew.customSqlSegment}
+	</select>
+	
+
+
+</mapper>

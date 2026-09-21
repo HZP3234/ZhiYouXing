@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhiyouxing.travel.dao.HelpRequestDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.zhiyouxing.travel.entity.HelpRequestEntity" id="helpRequestMap">
+        <result property="guideNo" column="guide_no"/>
+        <result property="guideName" column="guide_name"/>
+        <result property="userAccount" column="user_account"/>
+        <result property="userName" column="user_name"/>
+        <result property="helpContent" column="help_content"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="auditStatus" column="audit_status"/>
+        <result property="replyContent" column="reply_content"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.zhiyouxing.travel.entity.vo.HelpRequestVO" >
+		SELECT * FROM help_request  help_request         
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.zhiyouxing.travel.entity.vo.HelpRequestVO" >
+		SELECT  help_request.* FROM help_request  help_request 	
+ 		${ew.customSqlSegment}
+	</select>
+
+    <select id="selectListView"
+		resultType="com.zhiyouxing.travel.entity.view.HelpRequestView" >
+
+		SELECT  help_request.* FROM help_request  help_request 	        
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectView"
+		resultType="com.zhiyouxing.travel.entity.view.HelpRequestView" >
+		SELECT * FROM help_request  help_request ${ew.customSqlSegment}
+	</select>
+	
+
+    <select id="selectValue" resultType="map" >
+        SELECT ${params.xColumn}, ROUND(sum(${params.yColumn}),1) total FROM help_request
+        ${ew.customSqlSegment}
+        group by ${params.xColumn}
+    </select>
+
+    <select id="selectTimeStatValue" resultType="map" >
+        <if test = 'params.timeStatType == "日"'>
+                SELECT DATE_FORMAT(${params.xColumn},'%Y-%m-%d') ${params.xColumn}, sum(${params.yColumn}) total FROM help_request
+                ${ew.customSqlSegment}
+                group by DATE_FORMAT(${params.xColumn},'%Y-%m-%d')
+        </if>
+        <if test = 'params.timeStatType == "月"'>
+                SELECT DATE_FORMAT(${params.xColumn},'%Y-%m') ${params.xColumn}, sum(${params.yColumn}) total FROM help_request
+                ${ew.customSqlSegment}
+                group by DATE_FORMAT(${params.xColumn},'%Y-%m')
+        </if>
+        <if test = 'params.timeStatType == "年"'>
+                SELECT DATE_FORMAT(${params.xColumn},'%Y') ${params.xColumn}, sum(${params.yColumn}) total FROM help_request
+                ${ew.customSqlSegment}
+                group by DATE_FORMAT(${params.xColumn},'%Y')
+        </if>
+    </select>
+
+    <select id="selectGroup" resultType="map" >
+        SELECT ${params.column} , count(1) total FROM help_request
+        ${ew.customSqlSegment}
+        group by ${params.column}
+    </select>
+
+
+
+
+</mapper>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhiyouxing.travel.dao.ForumDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.zhiyouxing.travel.entity.ForumEntity" id="forumMap">
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="avatarUrl" column="avatar_url"/>
+        <result property="isDone" column="is_done"/>
+        <result property="isTop" column="is_top"/>
+        <result property="topTime" column="top_time"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.zhiyouxing.travel.entity.vo.ForumVO" >
+		SELECT * FROM forum  forum         
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.zhiyouxing.travel.entity.vo.ForumVO" >
+		SELECT  forum.* FROM forum  forum 	
+ 		${ew.customSqlSegment}
+	</select>
+
+    <select id="selectListView"
+		resultType="com.zhiyouxing.travel.entity.view.ForumView" >
+
+		SELECT  forum.* FROM forum  forum 	        
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectView"
+		resultType="com.zhiyouxing.travel.entity.view.ForumView" >
+		SELECT * FROM forum  forum ${ew.customSqlSegment}
+	</select>
+	
+
+
+</mapper>

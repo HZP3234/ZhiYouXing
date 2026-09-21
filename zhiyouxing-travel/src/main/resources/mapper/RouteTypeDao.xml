@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhiyouxing.travel.dao.RouteTypeDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.zhiyouxing.travel.entity.RouteTypeEntity" id="routeTypeMap">
+        <result property="routeType" column="route_type"/>
+        <result property="image" column="image"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.zhiyouxing.travel.entity.vo.RouteTypeVO" >
+		SELECT * FROM route_type  route_type         
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.zhiyouxing.travel.entity.vo.RouteTypeVO" >
+		SELECT  route_type.* FROM route_type  route_type 	
+ 		${ew.customSqlSegment}
+	</select>
+
+    <select id="selectListView"
+		resultType="com.zhiyouxing.travel.entity.view.RouteTypeView" >
+
+		SELECT  route_type.* FROM route_type  route_type 	        
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectView"
+		resultType="com.zhiyouxing.travel.entity.view.RouteTypeView" >
+		SELECT * FROM route_type  route_type ${ew.customSqlSegment}
+	</select>
+	
+
+
+</mapper>

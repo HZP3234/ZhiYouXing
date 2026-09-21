@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhiyouxing.hotel.dao.HotelReservationDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.zhiyouxing.hotel.entity.HotelReservationEntity" id="hotelReservationMap">
+        <result property="reservationNo" column="reservation_no"/>
+        <result property="roomName" column="room_name"/>
+        <result property="roomImage" column="room_image"/>
+        <result property="roomPrice" column="room_price"/>
+        <result property="roomCount" column="room_count"/>
+        <result property="stayDays" column="stay_days"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="hotelName" column="hotel_name"/>
+        <result property="reservationTime" column="reservation_time"/>
+        <result property="userAccount" column="user_account"/>
+        <result property="userName" column="user_name"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="isPay" column="is_pay"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.zhiyouxing.hotel.entity.vo.HotelReservationVO" >
+		SELECT * FROM hotel_reservation  hotel_reservation         
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.zhiyouxing.hotel.entity.vo.HotelReservationVO" >
+		SELECT  hotel_reservation.* FROM hotel_reservation  hotel_reservation 	
+ 		${ew.customSqlSegment}
+	</select>
+
+    <select id="selectListView"
+		resultType="com.zhiyouxing.hotel.entity.view.HotelReservationView" >
+
+		SELECT  hotel_reservation.* FROM hotel_reservation  hotel_reservation 	        
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectView"
+		resultType="com.zhiyouxing.hotel.entity.view.HotelReservationView" >
+		SELECT * FROM hotel_reservation  hotel_reservation ${ew.customSqlSegment}
+	</select>
+	
+
+    <select id="selectValue" resultType="map" >
+        SELECT ${params.xColumn}, ROUND(sum(${params.yColumn}),1) total FROM hotel_reservation
+        ${ew.customSqlSegment}
+        group by ${params.xColumn}
+    </select>
+
+    <select id="selectTimeStatValue" resultType="map" >
+        <if test = 'params.timeStatType == "日"'>
+                SELECT DATE_FORMAT(${params.xColumn},'%Y-%m-%d') ${params.xColumn}, sum(${params.yColumn}) total FROM hotel_reservation
+                ${ew.customSqlSegment}
+                group by DATE_FORMAT(${params.xColumn},'%Y-%m-%d')
+        </if>
+        <if test = 'params.timeStatType == "月"'>
+                SELECT DATE_FORMAT(${params.xColumn},'%Y-%m') ${params.xColumn}, sum(${params.yColumn}) total FROM hotel_reservation
+                ${ew.customSqlSegment}
+                group by DATE_FORMAT(${params.xColumn},'%Y-%m')
+        </if>
+        <if test = 'params.timeStatType == "年"'>
+                SELECT DATE_FORMAT(${params.xColumn},'%Y') ${params.xColumn}, sum(${params.yColumn}) total FROM hotel_reservation
+                ${ew.customSqlSegment}
+                group by DATE_FORMAT(${params.xColumn},'%Y')
+        </if>
+    </select>
+
+    <select id="selectGroup" resultType="map" >
+        SELECT ${params.column} , count(1) total FROM hotel_reservation
+        ${ew.customSqlSegment}
+        group by ${params.column}
+    </select>
+
+
+
+
+</mapper>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhiyouxing.attraction.dao.AttractionCommentDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.zhiyouxing.attraction.entity.AttractionCommentEntity" id="attractionCommentMap">
+        <result property="refId" column="ref_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="avatarUrl" column="avatar_url"/>
+        <result property="nickname" column="nickname"/>
+        <result property="content" column="content"/>
+        <result property="score" column="score"/>
+        <result property="reply" column="reply"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.zhiyouxing.attraction.entity.vo.AttractionCommentVO" >
+		SELECT * FROM attraction_comment  attraction_comment         
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.zhiyouxing.attraction.entity.vo.AttractionCommentVO" >
+		SELECT  attraction_comment.* FROM attraction_comment  attraction_comment 	
+ 		${ew.customSqlSegment}
+	</select>
+
+    <select id="selectListView"
+		resultType="com.zhiyouxing.attraction.entity.view.AttractionCommentView" >
+
+		SELECT  attraction_comment.* FROM attraction_comment  attraction_comment 	        
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectView"
+		resultType="com.zhiyouxing.attraction.entity.view.AttractionCommentView" >
+		SELECT * FROM attraction_comment  attraction_comment ${ew.customSqlSegment}
+	</select>
+	
+
+
+</mapper>

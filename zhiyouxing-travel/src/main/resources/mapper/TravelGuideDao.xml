@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhiyouxing.travel.dao.TravelGuideDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.zhiyouxing.travel.entity.TravelGuideEntity" id="travelGuideMap">
+        <result property="guideTitle" column="guide_title"/>
+        <result property="guideDetail" column="guide_detail"/>
+        <result property="userAccount" column="user_account"/>
+        <result property="thumbsUpNum" column="thumbs_up_num"/>
+        <result property="crazilyNum" column="crazily_num"/>
+        <result property="discussNum" column="discuss_num"/>
+        <result property="storeUpNum" column="store_up_num"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.zhiyouxing.travel.entity.vo.TravelGuideVO" >
+		SELECT * FROM travel_guide  travel_guide         
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.zhiyouxing.travel.entity.vo.TravelGuideVO" >
+		SELECT  travel_guide.* FROM travel_guide  travel_guide 	
+ 		${ew.customSqlSegment}
+	</select>
+
+    <select id="selectListView"
+		resultType="com.zhiyouxing.travel.entity.view.TravelGuideView" >
+
+		SELECT  travel_guide.* FROM travel_guide  travel_guide 	        
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectView"
+		resultType="com.zhiyouxing.travel.entity.view.TravelGuideView" >
+		SELECT * FROM travel_guide  travel_guide ${ew.customSqlSegment}
+	</select>
+	
+
+
+</mapper>

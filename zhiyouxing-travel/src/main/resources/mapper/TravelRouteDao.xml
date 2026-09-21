@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhiyouxing.travel.dao.TravelRouteDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.zhiyouxing.travel.entity.TravelRouteEntity" id="travelRouteMap">
+        <result property="routeName" column="route_name"/>
+        <result property="routeImage" column="route_image"/>
+        <result property="attractionName" column="attraction_name"/>
+        <result property="attractionType" column="attraction_type"/>
+        <result property="attractionLocation" column="attraction_location"/>
+        <result property="startPoint" column="start_point"/>
+        <result property="viaRoad" column="via_road"/>
+        <result property="endPoint" column="end_point"/>
+        <result property="routeFee" column="route_fee"/>
+        <result property="groupQuota" column="group_quota"/>
+        <result property="departureDate" column="departure_date"/>
+        <result property="transportMode" column="transport_mode"/>
+        <result property="days" column="days"/>
+        <result property="routeDetail" column="route_detail"/>
+        <result property="guideNo" column="guide_no"/>
+        <result property="guideName" column="guide_name"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="guideResume" column="guide_resume"/>
+        <result property="thumbsUpNum" column="thumbs_up_num"/>
+        <result property="crazilyNum" column="crazily_num"/>
+        <result property="discussNum" column="discuss_num"/>
+        <result property="storeUpNum" column="store_up_num"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.zhiyouxing.travel.entity.vo.TravelRouteVO" >
+		SELECT * FROM travel_route  travel_route         
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.zhiyouxing.travel.entity.vo.TravelRouteVO" >
+		SELECT  travel_route.* FROM travel_route  travel_route 	
+ 		${ew.customSqlSegment}
+	</select>
+
+    <select id="selectListView"
+		resultType="com.zhiyouxing.travel.entity.view.TravelRouteView" >
+
+		SELECT  travel_route.* FROM travel_route  travel_route 	        
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectView"
+		resultType="com.zhiyouxing.travel.entity.view.TravelRouteView" >
+		SELECT * FROM travel_route  travel_route ${ew.customSqlSegment}
+	</select>
+	
+
+
+</mapper>

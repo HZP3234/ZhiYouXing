@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhiyouxing.hotel.dao.RoomTypeDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.zhiyouxing.hotel.entity.RoomTypeEntity" id="roomTypeMap">
+        <result property="hotelName" column="hotel_name"/>
+        <result property="roomName" column="room_name"/>
+        <result property="roomType" column="room_type"/>
+        <result property="roomImage" column="room_image"/>
+        <result property="roomFacility" column="room_facility"/>
+        <result property="roomPrice" column="room_price"/>
+        <result property="roomCount" column="room_count"/>
+        <result property="roomDescription" column="room_description"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.zhiyouxing.hotel.entity.vo.RoomTypeVO" >
+		SELECT * FROM room_type  room_type         
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.zhiyouxing.hotel.entity.vo.RoomTypeVO" >
+		SELECT  room_type.* FROM room_type  room_type 	
+ 		${ew.customSqlSegment}
+	</select>
+
+    <select id="selectListView"
+		resultType="com.zhiyouxing.hotel.entity.view.RoomTypeView" >
+
+		SELECT  room_type.* FROM room_type  room_type 	        
+        ${ew.customSqlSegment}
+	</select>
+	
+	<select id="selectView"
+		resultType="com.zhiyouxing.hotel.entity.view.RoomTypeView" >
+		SELECT * FROM room_type  room_type ${ew.customSqlSegment}
+	</select>
+	
+
+
+</mapper>
